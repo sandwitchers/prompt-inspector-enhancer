@@ -33,7 +33,7 @@ program
       analysis.identifiedVulnerabilities.forEach(v => console.log(chalk.red(`  - ${v}`)));
     }
 
-    const enhancedResult = Repository = PromptEnhancer.enhance(options.prompt);
+    const enhancedResult = PromptEnhancer.enhance(options.prompt);
     console.log(chalk.green.bold('\n=== HASIL PROMPT YANG DIOPTIMALKAN ===\n'));
     console.log(chalk.white(enhancedResult.enhancedPrompt));
     console.log(chalk.cyan(`\nPeningkatan Skor Kejelasan: ${enhancedResult.metricsBefore.clarityScore} -> ${enhancedResult.metricsAfter.clarityScore}`));
@@ -47,7 +47,7 @@ program
     try {
       const data = fs.readFileSync(options.input, 'utf-8');
       const prompts: string[] = JSON.parse(data);
-      console.log(chalk.blue.bold(`\nMemproses ${prompts.length} prompt dari ${options.input}...\n`));
+      console.log(chalk.blue.bold(`\nMemproses ${prompts.length} prompt dari **${options.input}**...\n`));
 
       prompts.forEach((p, idx) => {
         console.log(chalk.yellow(`[Prompt #${idx + 1}]`));
