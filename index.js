@@ -3,12 +3,37 @@ import { renderExtensionTemplateAsync } from '../../../extensions.js';
 import { POPUP_RESULT, POPUP_TYPE, Popup } from '../../../popup.js';
 import { t } from '../../../i18n.js';
 
-const path = 'third-party/Extension-PromptInspector';
+const MODULE_NAME = 'prompt-inspector-enhancer';
+const LEGACY_MODULE_NAME = 'Extension-PromptInspector';
 const supportsYaml = typeof SillyTavern.libs === 'object' && 'yaml' in SillyTavern.libs;
 
 if (!('GENERATE_AFTER_COMBINE_PROMPTS' in event_types) || !('CHAT_COMPLETION_PROMPT_READY' in event_types)) {
     toastr.error('Required event types not found. Update SillyTavern to the latest version.');
     throw new Error('Events not found.');
+}
+
+async function loadTemplate() {
+    const context = typeof SillyTavern !== 'undefined' && SillyTavern.getContext ? SillyTavern.getContext() : null;
+    const renderFn = context?.renderExtensionTemplateAsync ?? renderExtensionTemplateAsync;
+
+    const candidates = [
+        `third-party/${MODULE_NAME}`,
+        `third-party/${LEGACY_MODULE_NAME}`,
+        MODULE_NAME,
+        LEGACY_MODULE_NAME,
+    ];
+
+    for (const cand of candidates) {
+        try {
+            const html = await renderFn(cand, 'template');
+            if (html) {
+                return $(html);
+            }
+        } catch (e) {
+            // Ignore failure and try next candidate
+        }
+    }
+    throw new Error(`Could not load template.html for ${MODULE_NAME} or ${LEGACY_MODULE_NAME}`);
 }
 
 function isChatCompletion() {
@@ -37,14 +62,15 @@ function addLaunchButton() {
     launchButton.appendChild(textSpan);
 
     const extensionsMenu = document.getElementById('prompt_inspector_wand_container') ?? document.getElementById('extensionsMenu');
-    extensionsMenu.classList.add('interactable');
-    extensionsMenu.tabIndex = 0;
-
     if (!extensionsMenu) {
-        throw new Error('Could not find the extensions menu');
+        console.error('Prompt Inspector: Could not find extensionsMenu');
+        return;
     }
 
+    extensionsMenu.classList.add('interactable');
+    extensionsMenu.tabIndex = 0;
     extensionsMenu.appendChild(launchButton);
+
     launchButton.addEventListener('click', () => {
         toggleInspectNext();
         textSpan.textContent = getText();
@@ -150,12 +176,6 @@ function yamlToJson(yaml) {
 
 /* ------------------------------------------------------------------ */
 /* Beautify helpers                                                     */
-/*                                                                      */
-/* The Beautify view is a derived, read-only visualization built on    */
-/* top of whatever is currently the canonical JSON (chat completion)   */
-/* or raw string (text completion) content. It never becomes the       */
-/* source of truth itself, so switching away from it can never corrupt */
-/* or lose data. Actual edits still happen in JSON / YAML / Raw Text.  */
 /* ------------------------------------------------------------------ */
 
 const MACRO_REGEX = /\{\{[^{}]+\}\}/g;
@@ -175,8 +195,6 @@ function escapeHtml(value) {
 
 /**
  * Counts unresolved {{macro}} occurrences left in already-combined prompt text.
- * A leftover macro at this stage (after ST's own substitution has run) usually
- * means a typo'd or unsupported macro name in a preset entry.
  * @param {string} text
  * @returns {number}
  */
@@ -223,10 +241,6 @@ async function copyToClipboard(text) {
 
 /**
  * Heuristically splits a raw (text-completion) prompt into visual blocks.
- * This is NOT guaranteed to map 1:1 onto the original preset entries — ST does
- * not preserve that information once everything is flattened into one string.
- * It only recognizes a handful of common instruct formats, and otherwise falls
- * back to splitting on blank lines. Both cases are labeled honestly in the UI.
  * @param {string} raw
  * @returns {{style: string, segments: string[]}|null}
  */
@@ -263,7 +277,7 @@ async function showPromptInspector(input) {
     const chatCompletion = isChatCompletion();
     const yamlAvailable = supportsYaml && chatCompletion;
 
-    const template = $(await renderExtensionTemplateAsync(path, 'template'));
+    const template = await loadTemplate();
     const prompt = template.find('#inspectPrompt');
     const formatSelect = template.find('#inspectPromptFormat');
     const beautifyContainer = template.find('#inspectPromptBeautify');
@@ -279,8 +293,6 @@ async function showPromptInspector(input) {
     formatSelect.find('option[value="yaml"]').toggle(yamlAvailable);
     formatSelect.find('option[value="raw"]').toggle(!chatCompletion);
 
-    // Resolve a format that's actually valid for this context, falling back
-    // to a sane default without permanently overwriting the saved preference.
     let currentFormat = inspectFormat;
     if (chatCompletion) {
         if (currentFormat === 'raw') currentFormat = 'json';
@@ -461,8 +473,6 @@ async function showPromptInspector(input) {
         }
     }
 
-    // Initial render for the resolved starting format (no localStorage write here;
-    // this only reflects context constraints, not a user-driven preference change).
     if (currentFormat === 'beautify') {
         prompt.hide();
         beautifyContainer.show();
@@ -491,13 +501,10 @@ async function showPromptInspector(input) {
     const popup = new Popup(template, POPUP_TYPE.CONFIRM, '', { wide: true, large: true, okButton: 'Save changes', cancelButton: 'Discard changes', customButtons: [customButton] });
     const result = await popup.show();
 
-    // If the user cancels, return the original input
     if (!result) {
         return input;
     }
 
-    // Beautify is a read-only lens: whatever was last held in canonicalValue is
-    // the actual content, whether the popup was left in Beautify or an edit mode.
     const output = currentFormat === 'beautify' ? canonicalValue : toCanonicalFromView(currentFormat, prompt.val());
 
     return String(output);
