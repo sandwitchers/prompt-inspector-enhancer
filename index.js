@@ -36,8 +36,26 @@ async function loadTemplate() {
     throw new Error(`Could not load template.html for ${MODULE_NAME} or ${LEGACY_MODULE_NAME}`);
 }
 
+/**
+ * Checks if prompt string is a valid JSON array of chat completion messages.
+ * @param {string} text
+ * @returns {boolean}
+ */
+function isJsonChatArray(text) {
+    if (typeof text !== 'string') return false;
+    const trimmed = text.trim();
+    if (!trimmed.startsWith('[')) return false;
+    try {
+        const parsed = JSON.parse(trimmed);
+        return Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object' && parsed[0] !== null && 'role' in parsed[0];
+    } catch {
+        return false;
+    }
+}
+
 function isChatCompletion() {
-    return main_api === 'openai';
+    const chatApis = ['openai', 'claude', 'openrouter', 'mistral', 'groq', 'ollama', 'featherless', 'aphrodite', 'kobold'];
+    return chatApis.includes(String(main_api).toLowerCase()) || main_api !== 'textgenerationwebui';
 }
 
 function addLaunchButton() {
@@ -79,7 +97,7 @@ function addLaunchButton() {
 }
 
 let inspectEnabled = localStorage.getItem('promptInspectorEnabled') === 'true' || false;
-let inspectFormat = localStorage.getItem('promptInspectorFormat') || 'json';
+let inspectFormat = localStorage.getItem('promptInspectorFormat') || 'beautify';
 
 function toggleInspectNext() {
     inspectEnabled = !inspectEnabled;
@@ -97,13 +115,8 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async (data) => {
         return;
     }
 
-    if (!isChatCompletion()) {
-        console.debug('Prompt Inspector: Not a chat completion prompt');
-        return;
-    }
-
     const promptJson = JSON.stringify(data.chat, null, 4);
-    const result = await showPromptInspector(promptJson);
+    const result = await showPromptInspector(promptJson, true);
 
     if (result === promptJson) {
         console.debug('Prompt Inspector: No changes');
@@ -113,7 +126,6 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async (data) => {
     try {
         const chat = JSON.parse(result);
 
-        // Chat is passed by reference, so we can modify it directly
         if (Array.isArray(chat) && Array.isArray(data.chat)) {
             data.chat.splice(0, data.chat.length, ...chat);
         }
@@ -135,8 +147,8 @@ eventSource.on(event_types.GENERATE_AFTER_COMBINE_PROMPTS, async (data) => {
         return;
     }
 
-    if (isChatCompletion()) {
-        console.debug('Prompt Inspector: Not a chat completion prompt');
+    if (isJsonChatArray(data.prompt) && isChatCompletion()) {
+        console.debug('Prompt Inspector: Already handled by CHAT_COMPLETION_PROMPT_READY');
         return;
     }
 
@@ -271,11 +283,12 @@ function segmentRawPrompt(raw) {
 /**
  * Shows a prompt inspector popup.
  * @param {string} input Initial prompt JSON (chat completion) or raw string (text completion)
+ * @param {boolean} [forceChatCompletion=false]
  * @returns {Promise<string>} Updated prompt content
  */
-async function showPromptInspector(input) {
-    const chatCompletion = isChatCompletion();
-    const yamlAvailable = supportsYaml && chatCompletion;
+async function showPromptInspector(input, forceChatCompletion = false) {
+    const isChat = forceChatCompletion || isChatCompletion() || isJsonChatArray(input);
+    const yamlAvailable = supportsYaml && isChat;
 
     const template = await loadTemplate();
     const prompt = template.find('#inspectPrompt');
@@ -289,16 +302,17 @@ async function showPromptInspector(input) {
     const summaryMacros = template.find('#pi-summary-macros');
     const editLinkButton = template.find('#pi-beautify-edit-link');
 
-    formatSelect.find('option[value="json"]').toggle(chatCompletion);
+    formatSelect.find('option[value="json"]').toggle(isChat);
     formatSelect.find('option[value="yaml"]').toggle(yamlAvailable);
-    formatSelect.find('option[value="raw"]').toggle(!chatCompletion);
+    formatSelect.find('option[value="raw"]').toggle(!isChat);
+    formatSelect.find('option[value="beautify"]').show();
 
     let currentFormat = inspectFormat;
-    if (chatCompletion) {
-        if (currentFormat === 'raw') currentFormat = 'json';
-        if (currentFormat === 'yaml' && !yamlAvailable) currentFormat = 'json';
+    if (isChat) {
+        if (currentFormat === 'raw') currentFormat = 'beautify';
+        if (currentFormat === 'yaml' && !yamlAvailable) currentFormat = 'beautify';
     } else {
-        if (currentFormat === 'json' || currentFormat === 'yaml') currentFormat = 'raw';
+        if (currentFormat === 'json' || currentFormat === 'yaml') currentFormat = 'beautify';
     }
 
     let canonicalValue = input;
@@ -317,7 +331,7 @@ async function showPromptInspector(input) {
     function renderChatBeautify(jsonString) {
         let messages;
         try {
-            messages = JSON.parse(jsonString);
+            messages = typeof jsonString === 'object' ? jsonString : JSON.parse(jsonString);
             if (!Array.isArray(messages)) {
                 throw new Error('Root value is not an array');
             }
@@ -422,7 +436,7 @@ async function showPromptInspector(input) {
     function renderBeautify(canonical) {
         cardsContainer.empty();
         emptyNotice.hide();
-        if (chatCompletion) {
+        if (isChat || isJsonChatArray(canonical)) {
             renderChatBeautify(canonical);
         } else {
             renderRawBeautify(canonical);
@@ -456,10 +470,10 @@ async function showPromptInspector(input) {
 
             if (newFormat === 'beautify') {
                 prompt.hide();
-                beautifyContainer.show();
+                beautifyContainer.removeClass('pi-hidden');
                 renderBeautify(canonical);
             } else {
-                beautifyContainer.hide();
+                beautifyContainer.addClass('pi-hidden');
                 prompt.show();
                 prompt.val(fromCanonicalToView(newFormat, canonical));
             }
@@ -475,16 +489,18 @@ async function showPromptInspector(input) {
 
     if (currentFormat === 'beautify') {
         prompt.hide();
-        beautifyContainer.show();
+        beautifyContainer.removeClass('pi-hidden');
         renderBeautify(canonicalValue);
     } else {
+        beautifyContainer.addClass('pi-hidden');
+        prompt.show();
         prompt.val(fromCanonicalToView(currentFormat, canonicalValue));
     }
 
     formatSelect.on('change', () => switchTo(formatSelect.val()));
     filterInput.on('input', () => applyFilter(filterInput.val()));
     editLinkButton.on('click', () => {
-        formatSelect.val(chatCompletion ? 'json' : 'raw');
+        formatSelect.val(isChat ? 'json' : 'raw');
         switchTo(formatSelect.val());
     });
 
