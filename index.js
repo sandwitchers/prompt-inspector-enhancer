@@ -54,8 +54,11 @@ function isJsonChatArray(text) {
 }
 
 function isChatCompletion() {
-    const chatApis = ['openai', 'claude', 'openrouter', 'mistral', 'groq', 'ollama', 'featherless', 'aphrodite', 'kobold'];
-    return chatApis.includes(String(main_api).toLowerCase()) || main_api !== 'textgenerationwebui';
+    // In SillyTavern, main_api is 'openai' for every chat-completion provider
+    // (Claude/OpenRouter/Mistral/Groq/etc. are chat_completion_source sub-settings,
+    // not distinct main_api values). Non-chat backends are 'textgenerationwebui',
+    // 'novel', 'kobold', 'koboldhorde'.
+    return main_api === 'openai';
 }
 
 function addLaunchButton() {
@@ -147,8 +150,8 @@ eventSource.on(event_types.GENERATE_AFTER_COMBINE_PROMPTS, async (data) => {
         return;
     }
 
-    if (isJsonChatArray(data.prompt) && isChatCompletion()) {
-        console.debug('Prompt Inspector: Already handled by CHAT_COMPLETION_PROMPT_READY');
+    if (isChatCompletion()) {
+        console.debug('Prompt Inspector: Not a chat completion prompt (handled by CHAT_COMPLETION_PROMPT_READY instead)');
         return;
     }
 
