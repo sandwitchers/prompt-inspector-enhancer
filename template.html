@@ -1,0 +1,27 @@
+<div class="flex-container flexFlowColumn height100p" id="promptInspectorRoot">
+    <div id="inspectPromptHeader">
+        <h3>View and Edit the prompt</h3>
+        <select id="inspectPromptFormat" class="text_pole">
+            <option value="json">JSON</option>
+            <option value="yaml">YAML</option>
+            <option value="raw">Raw Text</option>
+            <option value="beautify">Beautify</option>
+        </select>
+    </div>
+
+    <textarea id="inspectPrompt" class="flex1 monospace textarea_compact"></textarea>
+
+    <div id="inspectPromptBeautify" class="flex1" style="display: none;">
+        <div id="pi-beautify-summary">
+            <span id="pi-summary-count" class="pi-summary-chip"></span>
+            <span id="pi-summary-chars" class="pi-summary-chip"></span>
+            <span id="pi-summary-macros" class="pi-summary-chip pi-summary-chip-warn" style="display: none;"></span>
+            <input type="text" id="pi-beautify-filter" class="text_pole" placeholder="Cari di semua entry…" />
+            <button type="button" id="pi-beautify-edit-link" class="menu_button" title="Kembali ke mode edit">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+        </div>
+        <div id="pi-beautify-cards"></div>
+        <div id="pi-beautify-empty" style="display: none;">Tidak ada hasil yang cocok dengan pencarian.</div>
+    </div>
+</div>

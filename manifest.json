@@ -1,0 +1,12 @@
+{
+    "display_name": "Prompt Inspector (Beautify Fork)",
+    "loading_order": 5,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "Cohee1207 (original) — Beautify fork maintained by you",
+    "version": "1.2.0",
+    "homePage": "https://github.com/SillyTavern/Extension-PromptInspector",
+    "auto_update": false
+}

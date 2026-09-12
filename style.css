@@ -1,0 +1,222 @@
+#inspectPromptHeader {
+    position: relative;
+}
+
+#inspectPromptFormat {
+    position: absolute;
+    top: 0;
+    right: 0;
+    max-width: 7em;
+}
+
+@media screen and (max-width: 1000px) {
+    #inspectPromptHeader {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #inspectPromptFormat {
+        position: unset;
+    }
+}
+
+/* ---------------------------------------------------------- */
+/* Beautify view                                                */
+/* ---------------------------------------------------------- */
+
+#inspectPromptBeautify {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    gap: 0.5em;
+}
+
+#pi-beautify-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5em;
+    flex: 0 0 auto;
+}
+
+.pi-summary-chip {
+    font-size: 0.85em;
+    padding: 0.15em 0.6em;
+    border-radius: 1em;
+    background-color: var(--SmartThemeBotMesBlurTintColor, rgba(128, 128, 128, 0.25));
+    color: var(--SmartThemeBodyColor, inherit);
+    white-space: nowrap;
+}
+
+.pi-summary-chip-warn {
+    background-color: rgba(220, 90, 40, 0.25);
+    color: var(--fullred, #d5544b);
+    font-weight: 600;
+}
+
+#pi-beautify-filter {
+    flex: 1 1 12em;
+    min-width: 8em;
+}
+
+#pi-beautify-edit-link {
+    flex: 0 0 auto;
+}
+
+#pi-beautify-cards {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6em;
+    padding-right: 0.2em;
+}
+
+#pi-beautify-empty {
+    text-align: center;
+    opacity: 0.7;
+    padding: 2em 0;
+    font-style: italic;
+}
+
+.pi-card {
+    border: 1px solid var(--SmartThemeBorderColor, rgba(128, 128, 128, 0.4));
+    border-radius: 8px;
+    background-color: var(--SmartThemeBlurTintColor, rgba(128, 128, 128, 0.08));
+    overflow: hidden;
+}
+
+.pi-card-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    padding: 0.4em 0.6em;
+    cursor: pointer;
+    user-select: none;
+}
+
+.pi-card-header:hover {
+    background-color: var(--SmartThemeBotMesBlurTintColor, rgba(128, 128, 128, 0.15));
+}
+
+.pi-position {
+    font-family: monospace;
+    font-size: 0.8em;
+    opacity: 0.65;
+    min-width: 2.5em;
+}
+
+.pi-badge {
+    font-size: 0.78em;
+    font-weight: 600;
+    padding: 0.15em 0.55em;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #fff;
+}
+
+.pi-role-system { background-color: #5b6bd6; }
+.pi-role-user { background-color: #3fa95a; }
+.pi-role-assistant { background-color: #9b59b6; }
+.pi-role-tool { background-color: #d68a3f; }
+.pi-role-other { background-color: #808080; }
+
+.pi-name-badge {
+    font-size: 0.78em;
+    padding: 0.15em 0.5em;
+    border-radius: 4px;
+    background-color: var(--SmartThemeBotMesBlurTintColor, rgba(128, 128, 128, 0.3));
+    font-style: italic;
+}
+
+.pi-meta {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    font-size: 0.78em;
+    opacity: 0.75;
+}
+
+.pi-macro-count {
+    color: var(--fullred, #d5544b);
+    font-weight: 600;
+    opacity: 1;
+}
+
+.pi-card-actions {
+    display: flex;
+    gap: 0.3em;
+}
+
+.pi-card-actions .menu_button {
+    padding: 0.1em 0.4em;
+    font-size: 0.85em;
+}
+
+.pi-card-body {
+    padding: 0.6em 0.8em;
+    border-top: 1px solid var(--SmartThemeBorderColor, rgba(128, 128, 128, 0.25));
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: monospace;
+    font-size: 0.9em;
+    line-height: 1.45;
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+.pi-card.pi-collapsed .pi-card-body {
+    display: none;
+}
+
+.pi-card-chevron {
+    transition: transform 0.15s ease;
+    opacity: 0.6;
+}
+
+.pi-card.pi-collapsed .pi-card-chevron {
+    transform: rotate(-90deg);
+}
+
+.pi-macro-warn {
+    background-color: rgba(220, 90, 40, 0.3);
+    color: inherit;
+    border-radius: 3px;
+    padding: 0 0.15em;
+    font-weight: 600;
+}
+
+.pi-search-hit {
+    background-color: rgba(255, 215, 0, 0.35);
+    border-radius: 3px;
+}
+
+.pi-card-hidden-by-filter {
+    display: none !important;
+}
+
+.pi-segment-label {
+    font-size: 0.75em;
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.pi-fallback-note {
+    font-size: 0.8em;
+    opacity: 0.7;
+    font-style: italic;
+    padding: 0.4em 0.2em;
+}
+
+.pi-parse-error {
+    padding: 1em;
+    border: 1px dashed var(--fullred, #d5544b);
+    border-radius: 8px;
+    color: var(--fullred, #d5544b);
+}
