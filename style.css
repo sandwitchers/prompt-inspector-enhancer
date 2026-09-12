@@ -1,12 +1,23 @@
+#promptInspectorRoot {
+    display: flex;
+    flex-direction: column;
+    height: 70vh;
+    max-height: 85vh;
+    min-height: 350px;
+    box-sizing: border-box;
+}
+
 #inspectPromptHeader {
     position: relative;
+    flex: 0 0 auto;
+    margin-bottom: 0.5em;
 }
 
 #inspectPromptFormat {
     position: absolute;
     top: 0;
     right: 0;
-    max-width: 7em;
+    max-width: 8em;
 }
 
 @media screen and (max-width: 1000px) {
@@ -25,12 +36,23 @@
 /* Beautify view                                                */
 /* ---------------------------------------------------------- */
 
+#inspectPrompt {
+    flex: 1 1 auto;
+    min-height: 0;
+    resize: none;
+}
+
 #inspectPromptBeautify {
-    display: flex;
+    display: flex !important;
     flex-direction: column;
+    flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
     gap: 0.5em;
+}
+
+#inspectPromptBeautify.pi-hidden {
+    display: none !important;
 }
 
 #pi-beautify-summary {
@@ -72,6 +94,7 @@
     flex-direction: column;
     gap: 0.6em;
     padding-right: 0.2em;
+    min-height: 0;
 }
 
 #pi-beautify-empty {
@@ -86,6 +109,7 @@
     border-radius: 8px;
     background-color: var(--SmartThemeBlurTintColor, rgba(128, 128, 128, 0.08));
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .pi-card-header {
